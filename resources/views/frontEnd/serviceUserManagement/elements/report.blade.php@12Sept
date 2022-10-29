@@ -1,0 +1,278 @@
+<style type="text/css">
+    .fa.fa-edit {
+      color: #1f88b5;
+      font-size: 18px;
+      margin-left: 1px;
+      margin-top: 6px;
+    }
+</style>
+
+<div class="modal fade" id="ChooseReportModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+               <!--  <a class="close view-all-logs mdl-back-btn" href="" data-toggle="modal" data-dismiss="modal" data-target="">
+                    <i class="fa fa-arrow-left" title=""></i>
+                </a> -->
+                <h4 class="modal-title"> Report</h4>
+            </div>
+            <div class="modal-body" >
+                <div class="row">
+                    <div class="add-new-box risk-tabs custm-tabs">
+                        <!-- <form method="post" id="choose_report_form"> -->
+                            <div class="form-group col-md-12 col-sm-12 col-xs-12 p-0 add-rcrd">
+                                
+                                <div class="form-group col-md-12 col-sm-12 col-xs-12 p-0 add-rcrd">
+                                    <label class="col-md-4 col-sm-2 col-xs-12 p-t-7 text-right"> Select Report: </label>
+                                    <div class="col-md-6 col-sm-10 col-xs-12">
+                                        <div class="select-bi" style="width:100%;float:left;">
+                                            <select class="select-field form-control" style="width:100%;" name="reprt_name">
+                                                <option value="">Select Report</option>
+                                                <option value="W">Weekly</option>
+                                                <option value="M">Monthly</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+
+                            <div class="form-group modal-footer m-t-0 modal-bttm">
+                                <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true"> Cancel </button>
+                                <input type="hidden" name="srvcc_usrr_id">
+                                
+                                <button class="btn btn-warning submt-rprt" type="submit"> Submit </button>
+                            </div>
+                        <!-- </form> -->
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="ReportlogBookModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title header_txt">  </h4>
+            </div>
+            @include('frontEnd.common.popup_alert_messages')
+            <div class="modal-body" >
+                <div class="row">
+                    <div class="form-group col-md-12 col-sm-12 col-xs-12 serch-btns text-right">
+                        <!-- <button class="btn label-default add-new-btn active" type="button"> Add New </button> -->
+                        <!-- <button class="btn label-default logged-btn active" type="button"> Logged </button>
+                            <button class="btn label-default search-btn active" type="button"> Search </button> -->
+                        <!-- <button class="btn label-default logged-btn active" type="button"> Logged </button>
+                            <button class="btn label-default search-btn" type="button"> Search </button> -->
+                    </div>
+                    <!-- logged plans -->
+                    <div class="by-dflt-shw risk-tabs custm-tabs">
+
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            <h3 class="m-t-0 m-b-20 clr-blue fnt-20"> Logged </h3>
+                        </div>
+                        <div class="modal-space modal-pading reprt-log-book-list text-center">
+                            <!-- logged book list be shown here using ajax -->
+                        </div>
+                        <!-- </form> -->
+                        <div class="modal-footer m-t-0 recent-task-sec">
+                            <button class="btn btn-default" type="button" data-dismiss="modal" aria-hidden="true"> Cancel </button>
+                            <!-- <button class="btn btn-warning logged_daily_record_btn" type="button"> Confirm</button> -->
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Log Book Modal -->
+<div class="modal fade" id="editReportDetail" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <a class="close mdl-back-btn" href="" data-toggle="modal" data-dismiss="modal" data-target="#ReportlogBookModal">
+                    <i class="fa fa-arrow-left" title=""></i>
+                </a>
+                <h4 class="modal-title"> Edit Report  </h4>
+            </div>
+            <div class="modal-body" >
+                <div class="row">
+                
+
+                <form id="edit_report_form">
+                    <div class="add-new-box risk-tabs custm-tabs report_content ">
+                                
+                    </div>
+                    {{ csrf_field()}}
+                </form>
+
+               
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script type="text/javascript">
+    $(document).on('click','.submt-rprt',function(){
+        var reprt_name =  $('select[name=reprt_name]').val();
+        var srvcc_usrr_id =  $('input[name=srvcc_usrr_id]').val();
+        var token = "{{ csrf_token()}}";
+        if(reprt_name == 'M'){
+            var header_txt = 'Monthly Report';
+        }else{
+            var header_txt = 'Weekly Report';
+        }
+        error = 0;
+        if(reprt_name == '') {
+
+            $('select[name=\'reprt_name\']').parent().addClass('red_border');
+            error = 1;
+        } else {
+            $('select[name=\'reprt_name\']').parent().removeClass('red_border');
+        }
+
+        
+        if(error == 1) {
+            return false;
+        }
+        $.ajax({
+            type :  'post',
+            url  :  "{{ url('/select/report') }}",
+            data :  {'reprt_name':reprt_name,'_token': token,'service_user_id':srvcc_usrr_id},
+            //dataType : 'json',
+            success: function(resp){
+
+                if(isAuthenticated(resp) == false){
+                    return false;
+                }
+                if (resp == 0 || resp == ''){
+                    $('.header_txt').text(header_txt);
+                    $('.reprt-log-book-list').html('No Logs Found');
+                    $('#ChooseReportModal').modal('hide');
+                    $('#ReportlogBookModal').modal('show');
+
+                } else {
+                    $('.header_txt').text(header_txt);
+                    $('.reprt-log-book-list').html(resp);
+                    $('#ChooseReportModal').modal('hide');
+                    $('#ReportlogBookModal').modal('show');
+
+                }
+
+                $('.loader').hide();
+                $('body').removeClass('body-overflow');
+                
+            }
+        });
+
+    });
+</script>
+
+<script type="text/javascript">
+    $(document).on('click','.edit-mnthly-reprt',function(){
+        var log_id = $(this).attr('log_book_id');
+        $('.loader').show();
+        $.ajax({
+            type :  'get',
+            url  :  "{{ url('/monthly/report/detail') }}"+'/'+log_id,
+            success: function(resp){
+                // console.log(resp);
+                if(isAuthenticated(resp) == false){
+                    return false;
+                }
+                if(resp == 0 || resp == '') {
+                    $('.report_content').html('No Record Found');
+                    $('#ReportlogBookModal').modal('hide');
+                    $('#editReportDetail').modal('show');
+                } else {
+
+                    $('.report_content').html(resp);
+                    $('#ReportlogBookModal').modal('hide');
+                    $('#editReportDetail').modal('show');
+                }
+                $('.loader').hide();
+                $('body').removeClass('body-overflow');
+            }
+        });
+    });
+</script>
+
+<script type="text/javascript">
+    $(document).on('click','.sbmt-edit-rprt',function(){
+        var form_data = $('#edit_report_form').serialize();
+        
+        $('.loader').show();
+        $.ajax({
+            type : 'post',
+            url  : "{{ url('/edit/report/detail') }}",
+            data : form_data,
+            success: function(resp){
+                // console.log(resp); 
+                if (isAuthenticated(resp) == false){
+                    return false;
+                }
+                // alert(resp); return false;
+                if (resp == '0') {
+                    $('span.popup_error_txt').text('Error Occured');
+                    $('.popup_error').show();
+
+                } else {
+                    
+                    $('span.popup_success_txt').text('Report edit successfully');
+                    $('.popup_success').show();
+                    setTimeout(function(){$('.popup_success').fadeOut()},5000);
+                }
+                $('#ReportlogBookModal').modal('show');
+                $('#editReportDetail').modal('hide');
+                $('.loader').hide();
+                $('body').addClass('body-overflow');  
+            }
+
+        });
+        return false;
+
+    });
+</script>
+
+<script type="text/javascript">
+    $(document).on('click','.sent-reprt',function(){
+        var log_book_id = $(this).attr('log_book_id');
+        $('.loader').show();
+        $.ajax({
+            type : 'post',
+            url  : "{{ url('/send/mail/careteam') }}"+'/'+log_book_id,
+            success: function(resp){
+
+                if (isAuthenticated(resp) == false){
+                    return false;
+                }
+                // alert(resp); return false;
+                if (resp == '0') {
+                    $('span.popup_error_txt').text('Error Occured');
+                    $('.popup_error').show();
+
+                } else {
+                    
+                    $('span.popup_success_txt').text('Report send to care team successfully');
+                    $('.popup_success').show();
+                    setTimeout(function(){$('.popup_success').fadeOut()},5000);
+                }
+                // $('#ReportlogBookModal').modal('show');
+                // $('#editReportDetail').modal('hide');
+                $('.loader').hide();
+                $('body').addClass('body-overflow'); 
+            }
+        });
+
+    });
+</script>

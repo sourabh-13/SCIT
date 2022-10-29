@@ -1,0 +1,298 @@
+@extends('frontEnd.layouts.login')
+@section('title','Login')
+@section('content')
+    <!--  -->
+    <!-- <div class="form-signin" > -->
+    <form method="post" class="form-signin" action="{{ url('/login') }}" method="post" id="login_form" autocomplete="off" >
+        <h2 class="form-signin-heading">sign in now</h2>
+        <div class="login-wrap">
+            <div class="user-login-info">
+            
+              @include('frontEnd.common.popup_alert_messages')
+
+                <!-- This is just for avoid functionaliy of remember password -->
+                <div class="inp-hide">
+                  <input type="password" name="password" />
+                  <input type="text" name="username" />
+                </div>
+
+                <div class="form-group ">
+                   <input type="text" name="company_name" autocomplete="off" class="form-control" placeholder="Company Name" autofocus >
+                </div>
+                <div class="company_error" ></div>
+
+                <div class="form-group ">
+                  <select name="home" class="form-control inp-hide fnt-size" >
+                    <option value="">Select Home</option>
+                  </select>
+                </div>
+                
+                <div class="form-group">
+                  <input type="text" name="username" required class="form-control inp-hide" placeholder="Username" required autocomplete="off" >
+                </div>
+
+                <div class="form-group">
+                  <input type="password" name="password" required class="form-control inp-hide" placeholder="Password" required autocomplete="off" >
+                </div>
+                <!-- readonly  onfocus="this.removeAttribute('readonly');" -->
+            <!-- Below Div causing problem in designing -->
+            <!-- </div> -->
+            <label class="checkbox">
+                <!-- <input type="checkbox" value="remember-me"> Remember me -->
+                <span class="pull-right">
+                    <a data-toggle="modal" href="#forgotPasswordModal"> Forgot Password?</a>
+                </span>
+            </label>
+
+            <!-- <div class="registration">
+                Don't have an account yet?
+                <a class="" href="registration.html">
+                    Create an account
+                </a>
+            </div> -->
+
+        </div>
+        <div class="c-btn-group">
+          <button class="btn btn-lg btn-login btn-block inp-hide" type="submit">Sign in</button>
+        </div>
+    </form>
+    <!-- <div> -->
+
+    <!-- <form method="post"  action="{{ url('/login') }}" method="post" id="login_form" autocomplete="off" >
+        <input type="hidden" name="company_name1" value="">
+        <input type="hidden" name="home1" value="">
+        <input type="hidden" name="username1" value="">
+        <input type="hidden" name="password1" value="">
+    </form> -->
+
+    <!-- Forgot Password Modal -->
+    <div aria-hidden="true" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" id="forgotPasswordModal" class="modal fade">
+        <div class="modal-dialog">
+          <div class="modal-content">
+            <form method="post" action="{{ url('/forgot-password') }}" class="" id="forgot_pswrd_form">
+                  <div class="modal-header">
+                      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                      <h4 class="modal-title">Forgot Password ?</h4>
+                  </div>
+                  <div class="modal-body" >
+                      <p>Enter your e-mail address below to reset your password.</p>
+                      <input type="email" name="email" required autocomplete="off" placeholder="Email"  class="form-control placeholder-no-fix">
+                  </div>
+                  <div class="modal-body email_error"></div>
+                  <div class="modal-footer">
+                  <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                      <button data-dismiss="modal" class="btn btn-default" type="button">Cancel</button>
+                      <button class="btn btn-success " type="submit">Submit</button>
+                  </div>
+            </form>
+          </div>
+        </div>
+    </div>
+      <!-- Forgot Password Modal -->
+
+<script>
+    $(document).ready(function()
+  {
+    $('input[name=\'company_name\']').keydown(function(event){ 
+      var keyCode = (event.keyCode ? event.keyCode : event.which);   
+      if (keyCode == 13) {
+
+          var company_select  = $(this);
+          var company_name = company_select.val();
+          if(company_name == ''){
+            $('.company_error').html('<label for="company_name" generated="true" class="error">*This field is required.</label>');
+            return false;
+          } else{
+            $('.company_error').html('');
+          }
+
+          if(company_name == "scits super admin") {
+
+            $('.company_error').html('');
+            $('select[name=\'home\']').closest('.form-group').addClass('inp-hide');
+            $('input[name=\'username\']').closest('.form-group').removeClass('inp-hide');
+            $('input[name=\'password\']').closest('.form-group').removeClass('inp-hide');
+            $('.btn-login').removeClass('inp-hide');
+
+            return false;
+          }
+          
+          company_select.addClass('spinner');
+          
+          $.ajax({
+              type: 'get',
+              url : "{{ url('get-homes') }}"+'/'+company_name,
+              success:function(resp){
+                
+                if(resp != ''){
+                  
+                  $('select[name=\'home\'] option').remove();
+                  $('select[name=\'home\']').append('<option value="">Select Home</option>'+resp);
+                  $('select[name=\'home\']').removeClass('inp-hide');
+                  
+
+                } else{
+                  $('.company_error').html('<label for="company_name" generated="true" class="error">Company Name is not correct.</label>');
+                  $('select[name=\'home\']').addClass('inp-hide');
+                  $('input[name=\'username\']').addClass('inp-hide');
+                  $('input[name=\'password\']').addClass('inp-hide');
+                  $('.btn-login').addClass('inp-hide');                  
+                  $('.login-wrap').removeClass('login-trans-bg');
+                }
+                company_select.removeClass('spinner');
+              }
+          });
+         return false;
+      }
+    });
+  });
+</script>
+
+<script>
+$(document).ready(function()
+{
+    $('select[name=\'home\']').change(function(event){ 
+        var home_id = $(this).val();
+        if(home_id != ''){
+            $('input[name=\'username\']').removeClass('inp-hide');
+            $('input[name=\'password\']').removeClass('inp-hide');
+            $('.btn-login').removeClass('inp-hide');
+            $('.login-wrap').addClass('login-trans-bg');
+        } else{
+            $('input[name=\'username\']').addClass('inp-hide');
+            $('input[name=\'password\']').addClass('inp-hide');
+            $('.btn-login').addClass('inp-hide');
+            $('.login-wrap').removeClass('login-trans-bg');
+        }
+    return false;
+
+    });
+});
+</script>
+
+<script >
+    $(function() {
+        $("#login_form").validate({ 
+            rules: {
+                company_name:"required",
+                username:"required",
+                password: "required"  
+            },
+            
+            submitHandler: function(form) {
+              form.submit();
+            }
+        }) 
+    });
+</script>
+
+<script>
+  //function
+
+  /*$('.btn-login').click(function(){
+
+        var o_company_name = $('input[name=\'company_name\']').val();
+        var o_home         = $('select[name=\'home\']').val();
+        var o_username     = $('input[name=\'username\']').val();
+        var o_password     = $('input[name=\'password\']').val();
+
+
+        $('input[name=\'company_name1\']').val(o_company_name);
+        $('input[name=\'home1\']').val(o_home);
+        $('input[name=\'username1\']').val(o_username);
+        $('input[name=\'password1\']').val(o_password);
+
+        //$('#login_form').submit();
+        $("#login_form").validate({ 
+            rules: {
+                company_name:"required",
+                username:"required",
+                password: "required"  
+            },
+            
+            submitHandler: function(form) {
+              form.submit();
+            }
+        }) 
+  });*/  
+
+    $(function(){
+        $('#forgot_pswrd_form').validate({
+            
+            rules: {
+                email: {
+                    required: true,
+                    email: true,
+                    remote: "{{ url('/check-email-exists') }}" 
+                },
+            },
+            messages: {
+                email: {
+                    required: "This Field is required.",
+                    email:    "This Email is not valid.",
+                    remote:   "User with this email does not exist."
+                },
+            },
+            submitHandler: function(form) {
+
+                form.submit();
+                /*var email_id = $('input[name=\'email\']').val();
+                var token    = $('input[name=\'_token\']').val();
+
+                $.ajax({
+                    type:'post', 
+                    url: "{{ url('/forgot-password') }}", 
+                    data: {'email_id': email_id, '_token' : token},
+
+                    success:function(resp) {
+                        
+                        if(resp.response == "not_found") {
+
+                            $('.email_error').html("<label for='email' generated='true' style='color:red;'>User with this email not found.</label>"); 
+                        } else {
+
+                            $('span.popup_success_txt').text("Email Sent to " + email_id + " successfully.");
+                            $('.popup_success').show();   
+                            setTimeout(function(){$(".popup_success").fadeOut()}, 5000);
+                            $('#forgotPasswordModal').modal('hide');
+                        }
+                    }
+                });
+                return false;*/
+            }
+        })
+    });
+</script>
+
+<!-- <script>
+    $(document).ready(function(){
+        $(document).on('click', '.forgot_pswrd_send_email', function(){
+
+            var email_id = $('input[name=\'email\']').val();
+            var token    = $('input[name=\'_token\']').val();
+
+            $.ajax({
+                type:'post', 
+                url: "{{ url('/forgot-password') }}", 
+                data: {'email_id': email_id, '_token' : token},
+
+                success:function(resp) {
+                    
+                    if(resp.response == "not_found") {
+
+                        $('.email_error').html("<label for='email' generated='true' class='error'>User with this email not found.</label>"); 
+                    } else {
+
+                        $('span.popup_success_txt').text("Email Sent to " + email_id + " successfully.");
+                        $('.popup_success').show();   
+                        setTimeout(function(){$(".popup_success").fadeOut()}, 5000);
+                        $('#forgotPasswordModal').modal('hide');
+                    }
+                }
+            });
+        });
+        return false; 
+    });
+</script> -->
+
+@endsection

@@ -1,0 +1,18 @@
+[29-Jun-2022 06:50:05 Europe/London] PHP Fatal error:  Uncaught ErrorException: Method ReflectionParameter::getClass() is deprecated in /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php:809
+Stack trace:
+#0 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php(809): Illuminate\Foundation\Bootstrap\HandleExceptions->handleError(8192, 'Method Reflecti...', '/home2/mobapbm5...', 809)
+#1 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php(789): Illuminate\Container\Container->getDependencies(Array, Array)
+#2 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php(644): Illuminate\Container\Container->build('App\\Exceptions\\...', Array)
+#3 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(709): Illuminate\Container\Container->make('App\\Exceptions\\...', Array)
+#4 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php(231): Illuminate\Foundation\Application->make('App\\Exceptions\\...', Array)
+#5 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php(746): Illuminate\Container\Container->Illuminate\Container\{closure}(Object(Illuminate\Foundation\Application), Array)
+#6 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php(644): Illuminate\Container\Container->build(Object(Closure), Array)
+#7 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(709): Illuminate\Container\Container->make('Illuminate\\Cont...', Array)
+#8 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(154): Illuminate\Foundation\Application->make('Illuminate\\Cont...')
+#9 /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Foundation/Bootstrap/HandleExceptions.php(79): Illuminate\Foundation\Bootstrap\HandleExceptions->getExceptionHandler()
+#10 [internal function]: Illuminate\Foundation\Bootstrap\HandleExceptions->handleException(Object(ErrorException))
+#11 {main}
+  thrown in /home2/mobapbm5/public_html/socialcareitsolutions/vendor/laravel/framework/src/Illuminate/Container/Container.php on line 809
+[18-Jul-2022 13:25:44 Europe/London] PHP Fatal error:  'continue' not in the 'loop' or 'switch' context in /home2/mobapbm5/public_html/socialcareitsolutions/app/Http/Controllers/frontEnd/ViewReportController.php on line 203
+[21-Jul-2022 12:57:43 Europe/London] PHP Fatal error:  'continue' not in the 'loop' or 'switch' context in /home2/mobapbm5/public_html/socialcareitsolutions/app/Http/Controllers/frontEnd/ViewReportController.php on line 203
+[19-Aug-2022 12:55:30 Europe/London] PHP Fatal error:  'continue' not in the 'loop' or 'switch' context in /home2/mobapbm5/public_html/socialcareitsolutions/app/Http/Controllers/frontEnd/ViewReportController.php on line 203

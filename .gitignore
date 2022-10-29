@@ -1,0 +1,20 @@
+/node_modules
+/public/storage
+/vendor
+vendor/*
+/.idea
+Homestead.json
+Homestead.yaml
+.env
+/app@24_oct
+/app@27julyOld
+/Handovers
+/Handovers.zip
+/resources@24_oct
+/resources@27julyOld
+/resources@27july.zip
+/app@27july.zip
+/routes@24_oct
+/config@28June Old.zip
+/config@28June.zip
+*/**/.DS_Store

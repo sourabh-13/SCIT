@@ -1,0 +1,339 @@
+<?php
+namespace App\Http\Controllers\frontEnd\StaffManagement;
+use App\Http\Controllers\frontEnd\StaffManagementController;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
+
+
+use App\User, App\StaffRota, App\AccessLevel, App\RotaShift, App\Home;
+use DB, Auth, Session;
+
+class RotaController extends StaffManagementController
+{
+    public function index(Request $request) {
+        
+        // dd($request);
+        $home_id = Auth::user()->home_id;
+        $rota_time_format = Home::where('id', $home_id)->value('rota_time_format');
+        // echo $rota_time_format; die;
+        // dd($request->Session()->all());
+        $staff_query = User::select('id','name','image')
+                        ->where('home_id',$home_id)
+                        ->where('status','1')
+                        ->where('is_deleted','0');
+
+        $user_acc_rights = User::where('id',Auth::user()->id)->value('access_rights'); 
+        $user_acc_rights_ary = explode(',',$user_acc_rights);
+        if(!in_array('256',$user_acc_rights_ary)){ //if user has no right to edit his own page
+            $staff_query = $staff_query->where('id', '!=', Auth::user()->id);
+        }
+
+        if(!isset($request->rota_sel_access_level)) { //by default case
+
+            if(Session::has('rota_access_level')){ //filter
+                $rota_access_level = Session::get('rota_access_level');
+            } else{ 
+                ///when the page is open for the first time
+                $rota_access_level = 0;
+            }
+
+        } else {  //on changing select box option 
+
+            $rota_access_level = $request->rota_sel_access_level;
+            Session::put('rota_access_level', $rota_access_level);
+        }
+
+        if($rota_access_level > 0){ //donot filter the staff when access level is set to all access level 
+            $staff_query = $staff_query->where('access_level', $rota_access_level);
+        }
+
+        $staff = $staff_query->get()->toArray();
+        //if(isset($request->start-date)){
+        if(isset($_GET['start-date'])) {
+            $start_date = $_GET['start-date']; 
+        }  else {
+            $start_date = date('Y-m-d'); //today
+        }
+
+        $startDate = Carbon::parse($start_date);
+        
+        $dayOfWeek = $startDate->dayOfWeek; 
+        
+        $dayOfWeek--;
+        $start_day = date('Y-m-d',strtotime('-'.$dayOfWeek.' days', strtotime($start_date)));            
+   
+        foreach($staff as $key => $member) {
+            $staff[$key]['rota'] = $this->getStaffWeeklyRota($member['id'],$start_day,$home_id);
+            //$staff[$key]['rota'] = array();
+        }
+
+        //echo '<pre>'; print_r($staff); die;
+
+    /*  $shift_types = DB::table('rota_shift_type as rs_type')
+                    ->select('rs_type.id as type_id','rs_type.name','rs_type.tag','rs_time.start_time','rs_time.end_time')
+                    ->leftJoin('rota_shift_time as rs_time','rs_time.shift_type_id','rs_type.id')
+                    ->where('rs_time.home_id',$home_id)
+                    ->get()
+                    ->toArray();
+    */
+        // $shift_timing_err = '';
+        // $shift_types = RotaShiftType::select('id as type_id','name','tag')->get();
+        // foreach($shift_types as $key => $shift_type){
+
+        //     $shift_time = DB::table('rota_shift_time')->select('start_time','end_time')->where('shift_type_id',$shift_type->type_id)
+        //                     ->where('home_id',$home_id)
+        //                     ->first();
+        //     if(!empty($shift_time)){
+        //         $shift_types[$key]->start_time = $shift_time->start_time;
+        //         $shift_types[$key]->end_time = $shift_time->end_time;
+        //     } else{
+        //         $shift_types[$key]->start_time = '';
+        //         $shift_types[$key]->end_time = '';
+        //         $shift_timing_err = 'y';
+
+        //     }
+        // }
+        //echo '<pre>'; print_r($shift_types); die;
+
+        $shift_types = RotaShift::select('rota_shift.id as type_id','rota_shift.name','rota_shift.start_time','rota_shift.end_time','s_color.color')
+                                    ->leftJoin('rota_shift_color as s_color','s_color.id','=','rota_shift.rota_shift_color_id')
+                                    ->where('is_deleted','0')
+                                    ->where('home_id', $home_id)
+                                    ->get();
+       //echo '<pre>'; print_r($shift_types); die;
+ 
+        $access_level_name = AccessLevel::select('id','name')
+                                        ->where('home_id',$home_id)
+                                        ->where('is_deleted','0')
+                                        ->get();
+
+        return view('frontEnd.staffManagement.rota',compact('staff','start_day','shift_types','access_level_name','rota_access_level','rota_time_format'));  
+        
+    }
+
+    function getStaffWeeklyRota($staff_id,$start_day,$home_id) {
+
+        for($i=0;$i<=6;$i++) {
+
+            $date = date('Y-m-d',strtotime('+'.$i.' days', strtotime($start_day)));  
+            $rota[$date] = StaffRota::select('staff_rota.id','staff_rota.start_time','staff_rota.end_time','rs_color.color','rs.name','rs.rota_shift_color_id')
+                    ->where('user_id',$staff_id)
+                    ->join('rota_shift as rs','rs.id','staff_rota.shift_type_id')
+                    ->join('rota_shift_color as rs_color','rs_color.id','rs.rota_shift_color_id')
+                    ->whereDate('staff_rota.date','=',$date)
+                    ->where('staff_rota.home_id',$home_id)
+                    ->where('rs.is_deleted','0')
+                    ->first();
+
+            if(!empty($rota[$date])) {
+                $rota[$date] = $rota[$date]->toArray();
+            } else {
+                $rota[$date] = array();
+            }
+
+        }
+        return $rota;
+    }
+
+    // public function rota_time_format(Request $request) {
+    //     // echo "<pre>"; print_r($request->input()); die;
+    //     $time_format = $request->rota_sel_time_format; 
+    //     $home_id     = Auth::user()->home_id;
+
+    //     $update = Home::where('id', $home_id)->update(['rota_time_format' => $time_format]);
+    //     return redirect()->back();
+
+    // }
+
+    public function add_shift(Request $request) {
+        
+        $home_id        = Auth::user()->home_id; 
+        $shift_type_id  = $request->shift_type_id;
+        $shift_date     = $request->date;
+        $staff_id       = $request->staff_id;
+        
+        $result['response'] = false;
+        if(!empty($shift_type_id)) {
+
+            // $shift_type = DB::table('rota_shift_type as rs_type')
+            //         ->select('rs_type.id as type_id','rs_type.name','rs_type.tag','rs_time.start_time','rs_time.end_time')
+            //         ->leftJoin('rota_shift_time as rs_time','rs_time.shift_type_id','rs_type.id')
+            //         ->where('rs_time.home_id',$home_id)
+            //         ->where('rs_time.shift_type_id',$shift_type_id)
+            //         ->first();
+           $shift_type = RotaShift::select('rota_shift.name','rota_shift.start_time','rota_shift.end_time','s_color.color')
+                                    ->leftJoin('rota_shift_color as s_color','s_color.id','=','rota_shift.rota_shift_color_id')
+                                    ->where('rota_shift.id', $shift_type_id)
+                                    ->where('home_id', $home_id)
+                                    ->first();
+
+            if(!empty($shift_type)) {
+
+                $rota = staffRota::where('user_id',$staff_id)
+                                ->where('home_id',$home_id)
+                                //->where('shift_type_id',$shift_type_id)
+                                ->whereDate('date',$shift_date)
+                                ->first(); 
+                
+                if(empty($rota)) {
+                    $rota                = new staffRota;
+                    $rota->home_id       = $home_id;
+                    $rota->user_id       = $staff_id;
+                    $rota->shift_type_id = $shift_type_id;
+                    $rota->date          = $shift_date;
+                    $rota->start_time    = $shift_type->start_time;
+                    $rota->end_time      = $shift_type->end_time;
+                    
+                    if($rota->save()) {
+
+                        $start_time = StaffRota::timeFormat($rota->start_time);
+                        $end_time   = StaffRota::timeFormat($rota->end_time);
+
+                        $result['response']     = true;
+                        $result['start_time']   = $start_time;
+                        $result['end_time']     = $end_time;
+                        $result['rota_id']      = $rota->id;
+                        $result['date']         = $rota->date;
+                    } 
+                } else {
+                    $result['response']     = 'already_exists';
+                }
+            } else {
+                    $result['response']     = 'not_exist_shift_time';
+            }
+        }
+        return $result; 
+    }
+
+    public function delete($rota_id) {
+        
+        if(!empty($rota_id)) {
+            $res = staffRota::where('id', $rota_id)->where('home_id', Auth::user()->home_id)->delete();
+            echo $res;
+        }
+        die;
+    }
+
+    public function add_rota(Request $request) {
+        
+        $data = $request->input();
+
+        $rota_time = RotaShift::where('id',$data['shift_type_id'])->first();
+
+        if(empty($rota_time)) {
+            //echo 'Please set shift start and end time first';
+            return redirect()->back()->with('error','Please set rota shift timing from Admin.');
+        } else {
+           
+            foreach ($data['staff_id'] as  $staff_id) {
+                //ECHO $staff_id.'<br>'; 
+                $start_day = $data['from_date'];
+                $from_date = date_create($data['from_date']);
+                $to_date   = date_create($data['to_date']);
+
+                $days_diff = date_diff($from_date,$to_date);
+                $days_diff = $days_diff->d;
+                
+                for($i=0; $i<=$days_diff; $i++) {
+
+                    $date = date('Y-m-d',strtotime('+'.$i.' days', strtotime($start_day))); 
+
+                    $rota_date = staffRota::select('id','date')->whereDate('date',$date)->where('user_id',$staff_id)->first();
+                
+                    if(!empty($rota_date)) {
+                        $update = staffRota::where('id', $rota_date->id)->update(['shift_type_id' => $data['shift_type_id']]);
+                       
+                    } else {
+                        $rota                = new staffRota;
+                        $rota->home_id       = Auth::user()->home_id;
+                        $rota->user_id       = $staff_id;
+                        $rota->shift_type_id = $data['shift_type_id'];                  
+                        $rota->date          = $date;
+                        $rota->start_time    = $rota_time['start_time'];
+                        $rota->end_time      = $rota_time['end_time'];
+                        $rota->save();
+                    }
+                }
+            } 
+        }
+        return redirect()->back()->with('success', 'Rota added successfully.');
+    }
+
+    public function view_rota($rota_id = null) {
+        
+        $home_id  = Auth::user()->home_id;
+
+        $rota_record = staffRota::select('staff_rota.id as rota_id','staff_rota.start_time','staff_rota.end_time','u.name as staff_name','rs.name as shift_name','staff_rota.user_id as user_id')
+                            ->leftJoin('user as u','u.id','staff_rota.user_id')
+                            ->leftJoin('rota_shift as rs','rs.id','staff_rota.shift_type_id')
+                            //->where('u.is_deleted','0')
+                            ->where('staff_rota.home_id', $home_id)
+                            ->where('staff_rota.id', $rota_id)
+                            ->first();
+        
+        if(!empty($rota_record)) {
+            $result['response'] = true;
+            $result['rota_id']    = $rota_record->rota_id;
+            $result['user_id']    = $rota_record->user_id;
+            $result['start_time'] = $rota_record->start_time;
+            $result['end_time']   = $rota_record->end_time;
+            $result['staff_name']  = $rota_record->staff_name;
+            $result['shift_name'] = $rota_record->shift_name;
+        } else {
+            $result['response'] = false;
+        }
+        return $result;
+
+    }
+
+
+    public function edit_shift(Request $request) {
+
+        $data = $request->all();
+
+        $rota_id = $data['e_rota_id'];
+    
+        if($request->isMethod('post')) {
+            $home_id  = Auth::user()->home_id;
+
+            $edit_rota = staffRota::find($rota_id);
+            if(!empty($edit_rota)) {
+                $u_home_id = User::where('id', $edit_rota->user_id)->value('home_id');
+                if($u_home_id == $home_id) {
+                    $edit_rota->start_time = $data['e_start_time'];
+                    $edit_rota->end_time   = $data['e_end_time'];
+                    if($edit_rota->save()) {
+                        return redirect()->back()->with('success','Shift time updated successfully.');
+                    } else {
+                        return redirect()->back()->with('error','Some error occured,Plese try again later.'); 
+                    }
+                }
+            } else {
+                return redirect()->back()->with('error','UNAUTHORIZE_ERR');
+            }
+        }
+    }
+
+
+
+    /*function getStaffWeeklyRota($staff_id,$start_day){
+
+        for($i=0;$i<=6;$i++) {
+
+            $date = date('Y-m-d',strtotime('+'.$i.' days', strtotime($start_day)));  
+            $rota[$date] = StaffRota::select('staff_rota.id','rota_shift_info.title','rota_shift_info.tag')->where('user_id',$staff_id)
+                    ->join('rota_shift_info','rota_shift_info.id','staff_rota.shift_id')
+                    ->whereDate('staff_rota.date','=',$date)
+                    ->first();
+
+            if(!empty($rota[$date])){
+                $rota[$date] = $rota[$date]->toArray();
+            } else{
+                $rota[$date] = array();
+            }
+
+        }
+        return $rota;
+    }*/
+    
+}
